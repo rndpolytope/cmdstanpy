@@ -154,7 +154,7 @@ class Model:
         """
         return self.run(method='optimize', **kwargs)
 
-    def run(self, method, chains=1, wait=False, seed=0, **kwargs):
+    def run(self, method, chains=1, wait=False, seed=1, **kwargs):
         """Run chains instances of the model with the given method.
         Extra keyword arguments are passed to Run.__init__.
         """
@@ -163,6 +163,7 @@ class Model:
         runs = [
             Run(model=self,
                 method=method,
+                seed=seed,
                 id=rng.randint(1, 99999 + 1),
                 **kwargs) for _ in range(chains)
         ]
@@ -178,6 +179,7 @@ class Run:
                  method,
                  data=None,
                  id=None,
+                 seed=None,
                  start=True,
                  wait=False,
                  tmp_dir='',
@@ -186,6 +188,7 @@ class Run:
         """
         self.model = model
         self.id = id
+        self.seed = seed
         self.method = method
         self.method_args = method_args
         self.data = data
@@ -232,6 +235,8 @@ class Run:
         if not hasattr(self.model, 'exe'):
             self.model.compile()
         self._cmd = cmd = [self.model.exe]
+        if self.seed is not None:
+            cmd.extend(['random', 'seed={}'.format(self.seed)])
         if self.id is not None:
             cmd.append('id={}'.format(self.id))
         cmd.append(self.method)
